@@ -23,5 +23,5 @@ def order_total(order: Order) -> float:
     subtotal = round(subtotal, 2)
     discount = round(subtotal * LOYALTY_DISCOUNT_RATE, 2) if order.loyalty_member else 0.0
     taxable = round(subtotal - discount, 2)
-    tax = int(taxable * TAX_RATE * 100) / 100
+    tax = round(taxable * TAX_RATE, 2)
     return round(taxable + tax, 2)
