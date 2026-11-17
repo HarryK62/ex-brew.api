@@ -24,6 +24,6 @@ def build_receipt(order: Order) -> Receipt:
     subtotal = round(subtotal, 2)
     discount = round(subtotal * LOYALTY_DISCOUNT_RATE, 2) if order.loyalty_member else 0.0
     taxable = round(subtotal - discount, 2)
-    tax = int(taxable * TAX_RATE * 100) / 100  # round tax to the nearest cent
+    tax = round(taxable * TAX_RATE, 2)  # round tax to the nearest cent
     total = round(taxable + tax, 2)
     return Receipt(lines=lines, subtotal=subtotal, discount=discount, tax=tax, total=total)
