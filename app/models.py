@@ -1,7 +1,7 @@
 """Pydantic models for brew-api."""
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Item(BaseModel):
@@ -13,7 +13,7 @@ class Item(BaseModel):
 class OrderItem(BaseModel):
     """One line in a cart: an item name and how many."""
     name: str
-    quantity: int = 1
+    quantity: int = Field(default=1, ge=1)  # reject zero or negative quantities
 
 
 class Order(BaseModel):

@@ -50,3 +50,8 @@ def test_quote_empty_cart_is_zero():
     resp = client.post("/quote", json={"items": []})
     assert resp.status_code == 200
     assert resp.json()["savings"] == {"discount": 0.0, "tax": 0.0, "total": 0.0}
+
+
+def test_quote_negative_quantity_is_422():
+    resp = client.post("/quote", json={"items": [{"name": "latte", "quantity": -1}]})
+    assert resp.status_code == 422
