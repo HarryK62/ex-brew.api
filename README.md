@@ -28,9 +28,9 @@ tests/          the test suite
 
 ## Pricing
 
-Menu prices are **before tax**. An 8% tax is added on top, after any loyalty
+Menu prices are **before tax**. A 10% tax is added on top, after any loyalty
 discount. `GET /menu` shows each item's price, the tax added and the purchase
-price, so a latte reads 4.50 + 0.36 tax = 4.86. Loyalty members get 10% off.
+price, so a latte reads 4.82 + 0.48 tax = 5.30. Loyalty members get 10% off.
 
 ## Getting started
 

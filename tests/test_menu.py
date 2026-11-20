@@ -9,22 +9,22 @@ from app.orders import build_receipt
 client = TestClient(app)
 
 EXPECTED_PRICES = {
-    "latte": 4.50,
-    "cappuccino": 4.25,
-    "espresso": 3.00,
-    "americano": 3.75,
-    "blueberry muffin": 3.50,
-    "croissant": 3.25,
+    "latte": 4.82,
+    "cappuccino": 4.55,
+    "espresso": 3.21,
+    "americano": 4.01,
+    "blueberry muffin": 3.75,
+    "croissant": 3.48,
 }
 
-# Henry's menu columns: Item, Price, Tax added, Purchase price (8% tax on top).
+# Henry's menu columns: Item, Price, Tax added, Purchase price (10% tax on top).
 EXPECTED_MENU = [
-    ("latte", 4.50, 0.36, 4.86),
-    ("cappuccino", 4.25, 0.34, 4.59),
-    ("espresso", 3.00, 0.24, 3.24),
-    ("americano", 3.75, 0.30, 4.05),
-    ("blueberry muffin", 3.50, 0.28, 3.78),
-    ("croissant", 3.25, 0.26, 3.51),
+    ("latte", 4.82, 0.48, 5.30),
+    ("cappuccino", 4.55, 0.46, 5.01),
+    ("espresso", 3.21, 0.32, 3.53),
+    ("americano", 4.01, 0.40, 4.41),
+    ("blueberry muffin", 3.75, 0.38, 4.13),
+    ("croissant", 3.48, 0.35, 3.83),
 ]
 
 
@@ -99,9 +99,9 @@ def test_orders_accepts_mixed_case_item_name():
     assert resp.status_code == 200
     body = resp.json()
     assert body["lines"] == [
-        {"name": "latte", "quantity": 1, "unit_price": 4.50, "line_total": 4.50}
+        {"name": "latte", "quantity": 1, "unit_price": 4.82, "line_total": 4.82}
     ]
-    assert body["total"] == 4.86
+    assert body["total"] == 5.30
 
 
 def test_orders_unknown_item_is_400():

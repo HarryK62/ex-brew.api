@@ -1,7 +1,7 @@
 from app.menu import get_item
 from app.models import Order, Receipt, ReceiptLine
 
-TAX_RATE = 0.08
+TAX_RATE = 0.10  # raised from 8% on 2026-11-20
 LOYALTY_DISCOUNT_RATE = 0.10
 
 
