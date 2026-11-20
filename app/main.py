@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from app.menu import MENU, get_item
 from app.models import MenuEntry, Order, OrderItem, QuoteRequest, QuoteResponse, QuoteSavings, Receipt
 from app.orders import TAX_RATE, build_receipt
+from app.promos import promo_rate
 
 # Load settings such as BREW_API_KEY from a local .env file, if there is one.
 # .env is gitignored; see .env.example for the expected variables.
@@ -50,10 +51,19 @@ def _check_items(items: list[OrderItem]) -> None:
         raise HTTPException(status_code=400, detail=f"Unknown menu item: {exc.args[0]}")
 
 
+def _check_promo(code: str | None) -> None:
+    """Reject an unknown promo code with a 400 rather than silently ignoring it."""
+    try:
+        promo_rate(code)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=f"Unknown promo code: {exc.args[0]}")
+
+
 @app.post("/orders", response_model=Receipt)
 def create_order(order: Order) -> Receipt:
     """Price a cart and return its receipt."""
     _check_items(order.items)
+    _check_promo(order.promo_code)
     return build_receipt(order)
 
 
@@ -64,10 +74,14 @@ def quote(request: QuoteRequest) -> QuoteResponse:
     Prices the cart twice with build_receipt (as a non-member and as a
     member) so the quote always matches what /orders would charge. Savings
     are differences of the two rounded receipts, never subtotal * rate.
+    A promo code applies to both receipts, so savings stay loyalty-only.
     """
     _check_items(request.items)
-    standard = build_receipt(Order(items=request.items, loyalty_member=False))
-    member = build_receipt(Order(items=request.items, loyalty_member=True))
+    _check_promo(request.promo_code)
+    standard = build_receipt(Order(items=request.items, loyalty_member=False,
+                                   promo_code=request.promo_code))
+    member = build_receipt(Order(items=request.items, loyalty_member=True,
+                                 promo_code=request.promo_code))
     savings = QuoteSavings(
         discount=member.discount,
         tax=round(standard.tax - member.tax, 2),

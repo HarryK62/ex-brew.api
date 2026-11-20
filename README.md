@@ -21,6 +21,7 @@ app/
   models.py     Pydantic models (Order, Receipt, ...)
   menu.py       the menu and get_item()
   orders.py     pricing — build_receipt()
+  promos.py     promo codes (MAPLE10)
   summary.py    order_total() helper
   customers.py  customer lookup (added by an open PR — see Day 5)
 tests/          the test suite
@@ -31,6 +32,12 @@ tests/          the test suite
 Menu prices are **before tax**. A 10% tax is added on top, after any loyalty
 discount. `GET /menu` shows each item's price, the tax added and the purchase
 price, so a latte reads 4.82 + 0.48 tax = 5.30. Loyalty members get 10% off.
+
+**Promo codes.** Send `"promo_code": "MAPLE10"` with an order or quote to take
+another 10% off. It stacks with loyalty, and both discounts come off the
+subtotal, so a member using the code saves 20% before tax. Capitals and spaces in
+the code are ignored, and an unknown code returns a 400. Codes live in
+`app/promos.py`.
 
 ## Getting started
 

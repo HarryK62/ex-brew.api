@@ -1,0 +1,89 @@
+import pytest
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.models import Order, OrderItem
+from app.orders import build_receipt
+from app.promos import normalize_code, promo_rate
+
+client = TestClient(app)
+
+CART = [
+    {"name": "latte", "quantity": 2},
+    {"name": "blueberry muffin", "quantity": 1},
+]  # subtotal 13.39
+
+
+def _order(**kwargs):
+    return Order(items=[OrderItem(**i) for i in CART], **kwargs)
+
+
+def test_promo_non_member():
+    receipt = build_receipt(_order(promo_code="MAPLE10"))
+    assert receipt.subtotal == 13.39
+    assert receipt.discount == 0.0
+    assert receipt.promo_discount == 1.34
+    assert receipt.tax == 1.21
+    assert receipt.total == 13.26
+
+
+def test_promo_stacks_with_loyalty_off_the_subtotal():
+    """Both discounts are 10% of the subtotal, so a member with the code saves 20%."""
+    receipt = build_receipt(_order(loyalty_member=True, promo_code="MAPLE10"))
+    assert receipt.discount == 1.34
+    assert receipt.promo_discount == 1.34
+    assert receipt.tax == 1.07  # 10% of 10.71
+    assert receipt.total == 11.78
+
+
+@pytest.mark.parametrize("code", [None, "", "   "], ids=["missing", "empty", "blank"])
+def test_no_code_prices_as_before(code):
+    with_code = build_receipt(_order(loyalty_member=True, promo_code=code))
+    assert with_code == build_receipt(_order(loyalty_member=True))
+    assert with_code.promo_discount == 0.0
+
+
+@pytest.mark.parametrize(
+    "code", ["MAPLE10", "maple10", " Maple10 ", "\tMAPLE10\n"],
+    ids=["exact", "lower", "padded-mixed", "tab-newline"],
+)
+def test_code_ignores_case_and_whitespace(code):
+    assert normalize_code(code) == "MAPLE10"
+    assert promo_rate(code) == 0.10
+
+
+@pytest.mark.parametrize("code", ["MAPLE20", "MAPLE 10", "maple10x"], ids=["other", "inner-space", "suffix"])
+def test_unknown_code_raises_key_error(code):
+    with pytest.raises(KeyError) as exc_info:
+        promo_rate(code)
+    assert exc_info.value.args[0] == code
+
+
+def test_empty_cart_with_code_is_zero():
+    receipt = build_receipt(Order(items=[], loyalty_member=True, promo_code="MAPLE10"))
+    assert (receipt.subtotal, receipt.discount, receipt.promo_discount, receipt.tax, receipt.total) == (0, 0, 0, 0, 0)
+
+
+def test_orders_route_applies_promo():
+    resp = client.post("/orders", json={"items": CART, "loyalty_member": True, "promo_code": "maple10"})
+    assert resp.status_code == 200
+    assert resp.json()["promo_discount"] == 1.34
+    assert resp.json()["total"] == 11.78
+
+
+@pytest.mark.parametrize("path", ["/orders", "/quote"])
+def test_unknown_code_is_400(path):
+    resp = client.post(path, json={"items": CART, "promo_code": "FREECOFFEE"})
+    assert resp.status_code == 400
+    assert resp.json() == {"detail": "Unknown promo code: FREECOFFEE"}
+
+
+def test_quote_with_code_matches_build_receipt():
+    """The quote must never drift from what /orders charges, with a code too."""
+    body = client.post("/quote", json={"items": CART, "promo_code": "MAPLE10"}).json()
+    assert body["standard"] == build_receipt(_order(promo_code="MAPLE10")).model_dump()
+    assert body["member"] == build_receipt(_order(loyalty_member=True, promo_code="MAPLE10")).model_dump()
+    assert body["standard"]["total"] == 13.26
+    assert body["member"]["total"] == 11.78
+    # Savings show what loyalty adds on top of the promo.
+    assert body["savings"] == {"discount": 1.34, "tax": 0.14, "total": 1.48}

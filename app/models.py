@@ -28,6 +28,7 @@ class Order(BaseModel):
     """A customer's cart."""
     items: list[OrderItem]
     loyalty_member: bool = False
+    promo_code: str | None = None  # e.g. "MAPLE10"; case and spaces don't matter
 
 
 class ReceiptLine(BaseModel):
@@ -42,7 +43,8 @@ class Receipt(BaseModel):
     """The result of pricing an order."""
     lines: list[ReceiptLine]
     subtotal: float
-    discount: float
+    discount: float  # loyalty discount
+    promo_discount: float = 0.0
     tax: float
     total: float
 
@@ -50,6 +52,7 @@ class Receipt(BaseModel):
 class QuoteRequest(BaseModel):
     """A cart to quote. Priced both with and without loyalty."""
     items: list[OrderItem]
+    promo_code: str | None = None
 
 
 class QuoteSavings(BaseModel):
