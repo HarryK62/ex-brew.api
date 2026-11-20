@@ -1,9 +1,14 @@
 """brew-api — the Maple & Main Coffee ordering backend."""
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 
 from app.menu import MENU, get_item
 from app.models import Order, Receipt
 from app.orders import build_receipt
+
+# Load settings such as BREW_API_KEY from a local .env file, if there is one.
+# .env is gitignored; see .env.example for the expected variables.
+load_dotenv()
 
 app = FastAPI(title="brew-api", description="Maple & Main Coffee ordering backend")
 

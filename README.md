@@ -38,6 +38,7 @@ python -m venv .venv
 # Windows:  .venv\Scripts\activate
 # macOS/Linux:  source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # then set BREW_API_KEY in .env
 ```
 
 Run the API:
