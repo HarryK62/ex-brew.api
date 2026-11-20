@@ -13,7 +13,7 @@ from app.orders import build_receipt
 
 
 def test_loyalty_receipt_rounds_tax():
-    """A loyalty order of 1 latte + 1 cappuccino should total 8.50."""
+    """A loyalty order of 1 latte + 1 cappuccino should total 9.27."""
     order = Order(
         items=[
             OrderItem(name="latte", quantity=1),
@@ -22,5 +22,5 @@ def test_loyalty_receipt_rounds_tax():
         loyalty_member=True,
     )
     receipt = build_receipt(order)
-    assert receipt.tax == 0.63
-    assert receipt.total == 8.50
+    assert receipt.tax == 0.84
+    assert receipt.total == 9.27

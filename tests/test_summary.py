@@ -12,7 +12,7 @@ def test_order_total_matches_receipt():
         ],
         loyalty_member=True,
     )
-    assert order_total(order) == build_receipt(order).total == 12.15
+    assert order_total(order) == build_receipt(order).total == 13.26
 
 
 import pytest

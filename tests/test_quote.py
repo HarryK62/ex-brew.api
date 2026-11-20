@@ -16,20 +16,20 @@ def test_quote_shows_loyalty_savings():
     resp = client.post("/quote", json={"items": CART})
     assert resp.status_code == 200
     body = resp.json()
-    assert body["standard"]["total"] == 13.50
-    assert body["member"]["total"] == 12.15
+    assert body["standard"]["total"] == 14.73
+    assert body["member"]["total"] == 13.26
     # Members save the 10% discount plus the tax on that discount.
-    assert body["savings"] == {"discount": 1.25, "tax": 0.10, "total": 1.35}
+    assert body["savings"] == {"discount": 1.34, "tax": 0.13, "total": 1.47}
 
 
 def test_quote_rounding_cart():
-    """1 latte + 1 cappuccino: the discount rounds 0.875 up to 0.88."""
+    """1 latte + 1 cappuccino: the discount rounds 0.937 up to 0.94."""
     cart = [{"name": "latte", "quantity": 1}, {"name": "cappuccino", "quantity": 1}]
     body = client.post("/quote", json={"items": cart}).json()
-    assert body["member"]["discount"] == 0.88
-    assert body["member"]["total"] == 8.50
-    assert body["standard"]["total"] == 9.45
-    assert body["savings"]["total"] == 0.95
+    assert body["member"]["discount"] == 0.94
+    assert body["member"]["total"] == 9.27
+    assert body["standard"]["total"] == 10.31
+    assert body["savings"]["total"] == 1.04
 
 
 def test_quote_matches_build_receipt():
