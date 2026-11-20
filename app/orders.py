@@ -13,7 +13,8 @@ def build_receipt(order: Order) -> Receipt:
     of the subtotal, rounded to the cent on its own), then tax on what is
     left. Tax is always applied last, on the taxable total.
 
-    Raises KeyError for an unknown item or promo code.
+    Raises KeyError for an unknown item or promo code, and
+    app.promos.PromoNotActive for a code used outside its dates.
     """
     lines: list[ReceiptLine] = []
     subtotal = 0.0

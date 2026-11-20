@@ -28,7 +28,9 @@ class Order(BaseModel):
     """A customer's cart."""
     items: list[OrderItem]
     loyalty_member: bool = False
-    promo_code: str | None = None  # e.g. "MAPLE10"; case and spaces don't matter
+    # e.g. "MAPLE10"; case and spaces don't matter. Capped so a huge string
+    # isn't echoed back in the 400 detail.
+    promo_code: str | None = Field(default=None, max_length=32)
 
 
 class ReceiptLine(BaseModel):
@@ -52,7 +54,7 @@ class Receipt(BaseModel):
 class QuoteRequest(BaseModel):
     """A cart to quote. Priced both with and without loyalty."""
     items: list[OrderItem]
-    promo_code: str | None = None
+    promo_code: str | None = Field(default=None, max_length=32)
 
 
 class QuoteSavings(BaseModel):

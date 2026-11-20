@@ -151,3 +151,19 @@ def test_order_without_code_still_works_after_promo_ends(set_today):
     assert resp.status_code == 200
     assert resp.json()["promo_discount"] == 0.0
     assert resp.json()["total"] == 13.26
+
+
+@pytest.mark.parametrize("path", ["/orders", "/quote"])
+def test_code_expiring_mid_request_is_400_not_500(path, monkeypatch):
+    """The route checks the code, then build_receipt checks it again. If the
+    clock passes midnight on the last day in between, answer 400, not 500."""
+    days = iter([MAPLE10_LAST_DAY] + [date(2026, 12, 20)] * 5)
+    monkeypatch.setattr(promos, "today", lambda: next(days))
+    resp = client.post(path, json={"items": CART, "promo_code": "MAPLE10"})
+    assert resp.status_code == 400
+    assert "expired" in resp.json()["detail"]
+
+
+def test_overlong_code_is_422():
+    resp = client.post("/orders", json={"items": CART, "promo_code": "X" * 33})
+    assert resp.status_code == 422

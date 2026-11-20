@@ -15,9 +15,6 @@ class Promo:
     starts: date
     ends: date  # last valid day, inclusive
 
-    def is_active(self, on: date) -> bool:
-        return self.starts <= on <= self.ends
-
 
 class PromoNotActive(ValueError):
     """The code exists but can't be used today (expired or not started)."""

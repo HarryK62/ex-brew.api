@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 
 from app.menu import MENU, get_item
 from app.models import MenuEntry, Order, OrderItem, QuoteRequest, QuoteResponse, QuoteSavings, Receipt
-from app.orders import TAX_RATE, build_receipt
+from app.orders import build_receipt
 from app.promos import PromoNotActive, promo_rate
 
 # Load settings such as BREW_API_KEY from a local .env file, if there is one.
@@ -25,15 +25,15 @@ def menu() -> dict:
     """Return the full menu with the tax shown for each item.
 
     Menu prices are pre-tax. Each entry shows the price, the tax added on
-    top (rounded to the cent, as build_receipt does) and the purchase price
-    a non-member pays for one.
+    top and the purchase price a non-member pays for one. The tax comes from
+    build_receipt, so the menu can never disagree with what /orders charges.
     """
     entries = []
     for item in MENU.values():
-        tax = round(item.price * TAX_RATE, 2)
+        receipt = build_receipt(Order(items=[OrderItem(name=item.name)]))
         entries.append(
-            MenuEntry(name=item.name, price=item.price, tax=tax,
-                      purchase_price=round(item.price + tax, 2))
+            MenuEntry(name=item.name, price=item.price, tax=receipt.tax,
+                      purchase_price=receipt.total)
         )
     return {"items": [entry.model_dump() for entry in entries]}
 
@@ -61,12 +61,24 @@ def _check_promo(code: str | None) -> None:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+def _price(order: Order) -> Receipt:
+    """build_receipt, with a code that expires mid-request turned into a 400.
+
+    _check_promo runs first, but the date can roll past midnight before
+    build_receipt checks the code again; without this that would be a 500.
+    """
+    try:
+        return build_receipt(order)
+    except PromoNotActive as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.post("/orders", response_model=Receipt)
 def create_order(order: Order) -> Receipt:
     """Price a cart and return its receipt."""
     _check_items(order.items)
     _check_promo(order.promo_code)
-    return build_receipt(order)
+    return _price(order)
 
 
 @app.post("/quote", response_model=QuoteResponse)
@@ -80,9 +92,9 @@ def quote(request: QuoteRequest) -> QuoteResponse:
     """
     _check_items(request.items)
     _check_promo(request.promo_code)
-    standard = build_receipt(Order(items=request.items, loyalty_member=False,
+    standard = _price(Order(items=request.items, loyalty_member=False,
                                    promo_code=request.promo_code))
-    member = build_receipt(Order(items=request.items, loyalty_member=True,
+    member = _price(Order(items=request.items, loyalty_member=True,
                                  promo_code=request.promo_code))
     savings = QuoteSavings(
         discount=member.discount,
