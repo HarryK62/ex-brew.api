@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from app.menu import MENU, get_item
 from app.models import MenuEntry, Order, OrderItem, QuoteRequest, QuoteResponse, QuoteSavings, Receipt
 from app.orders import TAX_RATE, build_receipt
-from app.promos import promo_rate
+from app.promos import PromoNotActive, promo_rate
 
 # Load settings such as BREW_API_KEY from a local .env file, if there is one.
 # .env is gitignored; see .env.example for the expected variables.
@@ -52,11 +52,13 @@ def _check_items(items: list[OrderItem]) -> None:
 
 
 def _check_promo(code: str | None) -> None:
-    """Reject an unknown promo code with a 400 rather than silently ignoring it."""
+    """Reject an unknown, expired or not-yet-started code with a 400, never ignore it."""
     try:
         promo_rate(code)
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=f"Unknown promo code: {exc.args[0]}")
+    except PromoNotActive as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.post("/orders", response_model=Receipt)
