@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 
 from app.menu import MENU, get_item
-from app.models import Order, OrderItem, QuoteRequest, QuoteResponse, QuoteSavings, Receipt
-from app.orders import build_receipt
+from app.models import MenuEntry, Order, OrderItem, QuoteRequest, QuoteResponse, QuoteSavings, Receipt
+from app.orders import TAX_RATE, build_receipt
 
 # Load settings such as BREW_API_KEY from a local .env file, if there is one.
 # .env is gitignored; see .env.example for the expected variables.
@@ -21,8 +21,20 @@ def health() -> dict:
 
 @app.get("/menu")
 def menu() -> dict:
-    """Return the full menu."""
-    return {"items": [item.model_dump() for item in MENU.values()]}
+    """Return the full menu with the tax shown for each item.
+
+    Menu prices are pre-tax. Each entry shows the price, the tax added on
+    top (rounded to the cent, as build_receipt does) and the purchase price
+    a non-member pays for one.
+    """
+    entries = []
+    for item in MENU.values():
+        tax = round(item.price * TAX_RATE, 2)
+        entries.append(
+            MenuEntry(name=item.name, price=item.price, tax=tax,
+                      purchase_price=round(item.price + tax, 2))
+        )
+    return {"items": [entry.model_dump() for entry in entries]}
 
 
 def _check_items(items: list[OrderItem]) -> None:

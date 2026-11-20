@@ -10,6 +10,14 @@ class Item(BaseModel):
     price: float
 
 
+class MenuEntry(BaseModel):
+    """A menu line as customers see it: pre-tax price, the tax added, and what they pay."""
+    name: str
+    price: float
+    tax: float
+    purchase_price: float
+
+
 class OrderItem(BaseModel):
     """One line in a cart: an item name and how many."""
     name: str

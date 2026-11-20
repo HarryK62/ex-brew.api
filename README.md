@@ -10,7 +10,7 @@ waiting, just like code you inherit at work.
 | Method | Path      | Purpose                          |
 |--------|-----------|----------------------------------|
 | GET    | `/health` | Liveness check                   |
-| GET    | `/menu`   | The full menu                    |
+| GET    | `/menu`   | The menu, with tax and purchase price |
 | POST   | `/orders` | Price a cart and return a receipt |
 
 ## Project layout
@@ -28,8 +28,9 @@ tests/          the test suite
 
 ## Pricing
 
-All menu prices are **tax-inclusive** — the price on the menu is the price the
-customer pays. Loyalty members get 10% off.
+Menu prices are **before tax**. An 8% tax is added on top, after any loyalty
+discount. `GET /menu` shows each item's price, the tax added and the purchase
+price, so a latte reads 4.50 + 0.36 tax = 4.86. Loyalty members get 10% off.
 
 ## Getting started
 
